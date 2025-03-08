@@ -1,0 +1,26 @@
+{
+  "name": "React Tailwind Generator",
+  "id": "1479884282770601885",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "capabilities": [
+    "codegen"
+  ],
+  "enableProposedApi": false,
+  "documentAccess": "dynamic-page",
+  "editorType": [
+    "dev"
+  ],
+  "ui": "ui.html",
+  "codegenLanguages": [
+    {
+      "label": "React + Tailwind",
+      "value": "react-tailwind"
+    }
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  }
+}
