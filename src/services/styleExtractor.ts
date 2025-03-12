@@ -145,6 +145,20 @@ function extractVisualProperties(node: SceneNode, styles: StyleProperties): void
       if ('opacity' in fill && fill.opacity! < 1) {
         styles.opacity = fill.opacity!.toString();
       }
+    } else if (fill.type === 'IMAGE' && fill.visible !== false) {
+      // Extract image fill details
+      styles.backgroundImage = true;
+      styles.backgroundImageType = 'fill';
+      
+      // Store the image hash if available
+      if ('imageHash' in fill && fill.imageHash) {
+        styles.backgroundImageHash = fill.imageHash;
+      }
+      
+      // Store scaling information
+      if ('scaleMode' in fill) {
+        styles.backgroundSize = fill.scaleMode === 'FILL' ? 'cover' : 'contain';
+      }
     }
   }
   
@@ -153,6 +167,29 @@ function extractVisualProperties(node: SceneNode, styles: StyleProperties): void
     if (typeof node.cornerRadius === 'number') {
       styles.borderRadius = `${node.cornerRadius}px`;
     }
+  }
+
+  // Handle individual corner radii
+  if ('topLeftRadius' in node && 'topRightRadius' in node && 'bottomLeftRadius' in node && 'bottomRightRadius' in node) {
+    const { topLeftRadius, topRightRadius, bottomRightRadius, bottomLeftRadius } = node;
+    
+    // Store individual corner radii
+    styles.topLeftRadius = `${topLeftRadius}px`;
+    styles.topRightRadius = `${topRightRadius}px`;
+    styles.bottomRightRadius = `${bottomRightRadius}px`;
+    styles.bottomLeftRadius = `${bottomLeftRadius}px`;
+    
+    // If all corners are equal, use the shorthand
+    if (topLeftRadius === topRightRadius && topRightRadius === bottomRightRadius && bottomRightRadius === bottomLeftRadius) {
+      styles.borderRadius = `${topLeftRadius}px`;
+    } else {
+      // Otherwise specify each corner individually
+      styles.borderRadius = `${topLeftRadius}px ${topRightRadius}px ${bottomRightRadius}px ${bottomLeftRadius}px`;
+    }
+  }
+
+  if ('cornerSmoothing' in node && typeof node.cornerSmoothing === 'number' && node.cornerSmoothing > 0) {
+    styles.cornerSmoothing = node.cornerSmoothing;
   }
 
   // Handle strokes

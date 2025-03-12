@@ -20,7 +20,7 @@ export async function extractDesignTokens(): Promise<DesignTokens> {
 
   // Process color styles
   for (const style of paintStyles) {
-    if (style.paints[0]?.type === 'SOLID') {
+    if (style.paints && style.paints[0] && style.paints[0].type === 'SOLID') {
       const color = style.paints[0].color;
       const opacity = style.paints[0].opacity;
       tokens.colors[style.name] = {
@@ -53,7 +53,7 @@ export async function extractDesignTokens(): Promise<DesignTokens> {
 
   // Process effect styles
   for (const style of effectStyles) {
-    if (style.effects[0]?.type === 'DROP_SHADOW') {
+    if (style.effects && style.effects[0] && style.effects[0].type === 'DROP_SHADOW') {
       const shadow = style.effects[0];
       tokens.effects[style.name] = {
         value: {

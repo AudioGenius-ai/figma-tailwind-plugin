@@ -4,21 +4,41 @@
   "description": "Figma plugin to generate React components with Tailwind CSS",
   "main": "code.ts",
   "scripts": {
-    "build": "webpack --mode=production",
-    "watch": "webpack --mode=development --watch",
-    "dev": "webpack --mode=development"
+    "dev": "concurrently \"npm run dev:code\" \"npm run dev:ui\"",
+    "dev:code": "ENTRY_POINT=code vite build --watch",
+    "dev:ui": "ENTRY_POINT=ui vite build --watch",
+    "build": "npm run build:code && npm run build:ui",
+    "build:code": "ENTRY_POINT=code vite build",
+    "build:ui": "ENTRY_POINT=ui vite build",
+    "check": "tsc --noEmit",
+    "format": "prettier --write ."
   },
   "dependencies": {
+    "@babel/parser": "^7.26.9",
     "@figma/plugin-typings": "^1.82.0",
     "auto-format": "^1.1.1",
+    "class-variance-authority": "^0.7.1",
     "js-beautify": "^1.15.4",
-    "prettier": "3.5.3"
+    "jszip": "^3.10.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@effortlessmotion/html-webpack-inline-source-plugin": "^1.0.3",
     "@types/js-beautify": "^1.14.3",
     "@types/node": "^22.13.9",
+    "@types/prettier": "^2.7.3",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.0",
+    "clean-webpack-plugin": "^4.0.0",
+    "concurrently": "^8.2.2",
+    "html-webpack-plugin": "^5.6.3",
+    "prettier": "^3.5.3",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.2",
+    "vite": "^5.3.0",
+    "vite-plugin-singlefile": "^2.2.0",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1"
   }

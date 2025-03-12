@@ -91,4 +91,27 @@ export type BlendMode = 'PASS_THROUGH' | 'NORMAL' | 'DARKEN' | 'MULTIPLY' | 'COL
 
 export interface Transform {
   [key: string]: number;
+}
+
+// Payment API types
+export type PaymentStatus = {
+  type: 'PAID' | 'UNPAID'
+}
+
+export interface PaymentsAPI {
+  readonly status: PaymentStatus
+  setPaymentStatusInDevelopment(status: PaymentStatus): void
+  getUserFirstRanSecondsAgo(): number
+  initiateCheckoutAsync(options?: {
+    interstitial?: 'PAID_FEATURE' | 'TRIAL_ENDED' | 'SKIP'
+  }): Promise<void>
+  requestCheckout(): void
+  getPluginPaymentTokenAsync(): Promise<string>
+}
+
+// Augment the Figma namespace
+declare namespace Figma {
+  interface PluginAPI {
+    payments: PaymentsAPI;
+  }
 } 

@@ -70,6 +70,15 @@ export interface StyleProperties {
   opacity?: string;
   boxShadow?: string;
   
+  // Background image properties
+  backgroundImage?: boolean;
+  backgroundImageType?: 'fill' | 'pattern';
+  backgroundImageHash?: string;
+  backgroundImageUrl?: string;
+  backgroundSize?: string;
+  backgroundPosition?: string;
+  backgroundRepeat?: string;
+  
   // Effects and masking
   effects?: Array<{
     type: string;
