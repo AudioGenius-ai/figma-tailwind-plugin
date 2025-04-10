@@ -15,6 +15,26 @@ import { generateRenderContentFromStructure } from './renderUtils';
 import { analyzeComponentStructure, ComponentStructureNode } from './componentStructure';
 
 /**
+ * Convert component name to PascalCase format 
+ * e.g., "Component set/with-dash" → "ComponentSetWithDash"
+ */
+function toPascalCase(componentName: string): string {
+  // Remove any non-alphanumeric characters other than dash and slash
+  let sanitized = componentName.replace(/[^a-zA-Z0-9/-]/g, '');
+  
+  // Replace dashes and slashes with spaces, then split
+  const parts = sanitized.split(/[-/\s]/);
+  
+  // Convert to PascalCase
+  return parts
+    .map(part => {
+      if (!part) return '';
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join('');
+}
+
+/**
  * Generate a React component from a Figma component set with variants
  */
 export async function generateComponentWithVariants(
@@ -23,7 +43,8 @@ export async function generateComponentWithVariants(
   parentBounds?: Bounds
 ): Promise<string> {
   // Step 1: Setup
-  const componentName = generateComponentName(componentSet.name);
+  const rawComponentName = generateComponentName(componentSet.name);
+  const componentName = toPascalCase(rawComponentName);
   const variantProps = getVariantPropsFromComponentSet(componentSet);
   console.log('Analyzing component variants for:', componentName);
   

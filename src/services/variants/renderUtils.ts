@@ -8,6 +8,26 @@ import { ComponentStructureNode } from './componentStructure';
 import { sanitizeIdentifier } from './nameUtils';
 
 /**
+ * Convert component name with dashes and slashes to PascalCase
+ * e.g., "Huge-icon/arrows/bulk/redo-circle" → "HugeIconArrowsBulkRedoCircle"
+ */
+function toPascalCase(componentName: string): string {
+  // Remove any non-alphanumeric characters other than dash and slash
+  let sanitized = componentName.replace(/[^a-zA-Z0-9/-]/g, '');
+  
+  // Replace dashes and slashes with spaces, then split
+  const parts = sanitized.split(/[-/]/);
+  
+  // Convert to PascalCase
+  return parts
+    .map(part => {
+      if (!part) return '';
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join('');
+}
+
+/**
  * Generate JSX render content from the component structure
  */
 export function generateRenderContentFromStructure(
@@ -57,6 +77,9 @@ export function generateNodeJsx(
   
   // For component instances, render them directly with appropriate variant props
   if (node.type === 'component' && node.componentName) {
+    // Convert component name to PascalCase if it has dashes or slashes
+    const componentName = toPascalCase(node.componentName);
+    
     // Component instances should receive the variant props
     let propsStr = '';
     
@@ -77,7 +100,7 @@ export function generateNodeJsx(
       }
     }
     
-    return `${indent}<${node.componentName}${propsStr} />`;
+    return `${indent}<${componentName}${propsStr} />`;
   }
   
   // Generate a variant name for CVA using the cssName

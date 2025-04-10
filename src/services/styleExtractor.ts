@@ -1,5 +1,20 @@
-import { StyleProperties } from '../types/styleTypes';
+import { StyleProperties, RGBA } from '../types/styleTypes';
 import { rgbToHex } from '../utils/colorUtils';
+
+// Helper function to convert Figma color to RGB/RGBA string
+function colorToRgba(color: { r: number; g: number; b: number; a?: number }): string {
+  // Make sure we have values between 0-255
+  const r = Math.round(color.r * 255);
+  const g = Math.round(color.g * 255);
+  const b = Math.round(color.b * 255);
+  
+  // Check if we need to include alpha
+  if (color.a !== undefined && color.a !== 1) {
+    return `rgba(${r}, ${g}, ${b}, ${color.a})`;
+  } else {
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+}
 
 export async function extractStyles(node: SceneNode): Promise<StyleProperties> {
   const styles: StyleProperties = {};
@@ -141,7 +156,7 @@ function extractVisualProperties(node: SceneNode, styles: StyleProperties): void
   if (!styles.styleReferences!.fill && 'fills' in node && Array.isArray(node.fills) && node.fills.length > 0) {
     const fill = node.fills[0];
     if (fill.type === 'SOLID' && fill.visible !== false) {
-      styles.backgroundColor = rgbToHex(fill.color);
+      styles.backgroundColor = colorToRgba(fill.color);
       if ('opacity' in fill && fill.opacity! < 1) {
         styles.opacity = fill.opacity!.toString();
       }
@@ -196,10 +211,26 @@ function extractVisualProperties(node: SceneNode, styles: StyleProperties): void
   if ('strokes' in node && Array.isArray(node.strokes) && node.strokes.length > 0) {
     const stroke = node.strokes[0];
     if (stroke.type === 'SOLID' && stroke.visible !== false) {
-      const color = rgbToHex(stroke.color);
+      const color = colorToRgba(stroke.color);
       if ('strokeWeight' in node) {
         styles.strokeWeight = `${String(node.strokeWeight)}px`;
         styles.border = `${String(node.strokeWeight)}px solid ${color}`;
+        
+        // Extract stroke alignment
+        if ('strokeAlign' in node) {
+          styles.strokeAlign = node.strokeAlign;
+        }
+        
+        // Extract stroke dash pattern
+        if ('strokeDashes' in node && Array.isArray(node.strokeDashes) && node.strokeDashes.length > 0) {
+          if (node.strokeDashes.length === 2 && node.strokeDashes[0] === node.strokeDashes[1]) {
+            styles.borderStyle = 'dotted';
+          } else {
+            styles.borderStyle = 'dashed';
+          }
+        } else {
+          styles.borderStyle = 'solid';
+        }
       }
     }
   }
@@ -223,7 +254,7 @@ function extractVisualProperties(node: SceneNode, styles: StyleProperties): void
 
     const shadowEffect = node.effects.find(e => e.type === 'DROP_SHADOW' && e.visible);
     if (shadowEffect && shadowEffect.type === 'DROP_SHADOW') {
-      const color = rgbToHex(shadowEffect.color);
+      const color = colorToRgba(shadowEffect.color);
       const x = Math.round(shadowEffect.offset.x);
       const y = Math.round(shadowEffect.offset.y);
       const blur = Math.round(shadowEffect.radius);
@@ -350,7 +381,7 @@ function extractTextProperties(node: TextNode, styles: StyleProperties): void {
   if (node.fills && Array.isArray(node.fills) && node.fills.length > 0) {
     const fill = node.fills[0];
     if (fill.type === 'SOLID') {
-      styles.color = rgbToHex(fill.color);
+      styles.color = colorToRgba(fill.color);
     }
   }
   

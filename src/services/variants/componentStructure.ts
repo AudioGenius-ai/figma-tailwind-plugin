@@ -24,6 +24,15 @@ async function getNodeAssetPath(node: SceneNode): Promise<string | null> {
 }
 
 /**
+ * Convert component name with dashes and slashes to a clean name
+ * This preserves the original format for internal use
+ */
+function cleanComponentName(componentName: string): string {
+  // Remove any instance identifiers like "#123:456"
+  return componentName.replace(/#\d+:\d+/g, '').trim();
+}
+
+/**
  * Represents a variant property with its possible values
  */
 export interface VariantProperty {
@@ -172,7 +181,7 @@ export async function processComponentChildren(
         // Extract the base component name - take the part before any comma
         // which usually separates the component name from its variants
         const baseComponentName = node.name.split(',')[0].trim();
-        const instanceComponentName = baseComponentName;
+        const instanceComponentName = cleanComponentName(baseComponentName);
         
         // Extract variant properties from the instance
         const props = getComponentProps(node);

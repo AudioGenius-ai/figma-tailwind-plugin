@@ -19,6 +19,10 @@ export interface StyleProperties {
   // Display and positioning
   display?: string;
   position?: string;
+  top?: string;
+  right?: string;
+  bottom?: string;
+  left?: string;
   flexDirection?: string;
   flexWrap?: string;
   justifyContent?: string;
@@ -36,6 +40,10 @@ export interface StyleProperties {
   paddingBottom?: string;
   paddingLeft?: string;
   margin?: string;
+  marginTop?: string;
+  marginRight?: string;
+  marginBottom?: string;
+  marginLeft?: string;
   
   // Typography
   color?: string;
@@ -65,6 +73,7 @@ export interface StyleProperties {
   bottomRightRadius?: string;
   cornerSmoothing?: number;
   border?: string;
+  borderStyle?: string;
   strokeWeight?: string;
   strokeAlign?: string;
   opacity?: string;

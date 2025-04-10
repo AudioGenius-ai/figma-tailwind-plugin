@@ -26,6 +26,290 @@ function normalizeFlexValue(property: string, value: string): string {
   return value;
 }
 
+// Tailwind default colors - a subset focusing on the most commonly used colors
+const TAILWIND_COLORS = {
+  // Gray scale
+  black: '#000000',
+  white: '#FFFFFF',
+  slate: {
+    50: '#f8fafc',
+    100: '#f1f5f9',
+    200: '#e2e8f0',
+    300: '#cbd5e1',
+    400: '#94a3b8',
+    500: '#64748b',
+    600: '#475569',
+    700: '#334155',
+    800: '#1e293b',
+    900: '#0f172a',
+    950: '#020617',
+  },
+  gray: {
+    50: '#f9fafb',
+    100: '#f3f4f6',
+    200: '#e5e7eb',
+    300: '#d1d5db',
+    400: '#9ca3af',
+    500: '#6b7280',
+    600: '#4b5563',
+    700: '#374151',
+    800: '#1f2937',
+    900: '#111827',
+    950: '#030712',
+  },
+  zinc: {
+    50: '#fafafa',
+    100: '#f4f4f5',
+    200: '#e4e4e7',
+    300: '#d4d4d8',
+    400: '#a1a1aa',
+    500: '#71717a',
+    600: '#52525b',
+    700: '#3f3f46',
+    800: '#27272a',
+    900: '#18181b',
+    950: '#09090b',
+  },
+  // Primary colors
+  red: {
+    50: '#fef2f2',
+    100: '#fee2e2',
+    200: '#fecaca',
+    300: '#fca5a5',
+    400: '#f87171',
+    500: '#ef4444',
+    600: '#dc2626',
+    700: '#b91c1c',
+    800: '#991b1b',
+    900: '#7f1d1d',
+    950: '#450a0a',
+  },
+  orange: {
+    50: '#fff7ed',
+    100: '#ffedd5',
+    200: '#fed7aa',
+    300: '#fdba74',
+    400: '#fb923c',
+    500: '#f97316',
+    600: '#ea580c',
+    700: '#c2410c',
+    800: '#9a3412',
+    900: '#7c2d12',
+    950: '#431407',
+  },
+  yellow: {
+    50: '#fefce8',
+    100: '#fef9c3',
+    200: '#fef08a',
+    300: '#fde047',
+    400: '#facc15',
+    500: '#eab308',
+    600: '#ca8a04',
+    700: '#a16207',
+    800: '#854d0e',
+    900: '#713f12',
+    950: '#422006',
+  },
+  green: {
+    50: '#f0fdf4',
+    100: '#dcfce7',
+    200: '#bbf7d0',
+    300: '#86efac',
+    400: '#4ade80',
+    500: '#22c55e',
+    600: '#16a34a',
+    700: '#15803d',
+    800: '#166534',
+    900: '#14532d',
+    950: '#052e16',
+  },
+  blue: {
+    50: '#eff6ff',
+    100: '#dbeafe',
+    200: '#bfdbfe',
+    300: '#93c5fd',
+    400: '#60a5fa',
+    500: '#3b82f6',
+    600: '#2563eb',
+    700: '#1d4ed8',
+    800: '#1e40af',
+    900: '#1e3a8a',
+    950: '#172554',
+  },
+  indigo: {
+    50: '#eef2ff',
+    100: '#e0e7ff',
+    200: '#c7d2fe',
+    300: '#a5b4fc',
+    400: '#818cf8',
+    500: '#6366f1',
+    600: '#4f46e5',
+    700: '#4338ca',
+    800: '#3730a3',
+    900: '#312e81',
+    950: '#1e1b4b',
+  },
+  purple: {
+    50: '#faf5ff',
+    100: '#f3e8ff',
+    200: '#e9d5ff',
+    300: '#d8b4fe',
+    400: '#c084fc',
+    500: '#a855f7',
+    600: '#9333ea',
+    700: '#7e22ce',
+    800: '#6b21a8',
+    900: '#581c87',
+    950: '#3b0764',
+  },
+  pink: {
+    50: '#fdf2f8',
+    100: '#fce7f3',
+    200: '#fbcfe8',
+    300: '#f9a8d4',
+    400: '#f472b6',
+    500: '#ec4899',
+    600: '#db2777',
+    700: '#be185d',
+    800: '#9d174d',
+    900: '#831843',
+    950: '#500724',
+  },
+};
+
+// Helper function to calculate the color distance (simple Euclidean in RGB space)
+function colorDistance(color1: { r: number; g: number; b: number }, color2: { r: number; g: number; b: number }): number {
+  return Math.sqrt(
+    Math.pow(color1.r - color2.r, 2) + 
+    Math.pow(color1.g - color2.g, 2) + 
+    Math.pow(color1.b - color2.b, 2)
+  );
+}
+
+// Helper function to parse hex color to RGB
+function hexToRgb(hex: string): { r: number; g: number; b: number; a?: number } | null {
+  hex = hex.toLowerCase().trim();
+  // Remove the # if present
+  hex = hex.replace(/^#/, '');
+  
+  // Expand shorthand hex (e.g. #fff to #ffffff)
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('');
+  } else if (hex.length === 4) {
+    // Handle #rgba shorthand
+    const [r, g, b, a] = hex.split('');
+    hex = r + r + g + g + b + b + a + a;
+  }
+  
+  // Check for hex with alpha
+  let r, g, b, a;
+  if (hex.length === 8) {
+    // Format: #RRGGBBAA
+    r = parseInt(hex.slice(0, 2), 16);
+    g = parseInt(hex.slice(2, 4), 16);
+    b = parseInt(hex.slice(4, 6), 16);
+    a = parseInt(hex.slice(6, 8), 16) / 255; // Convert alpha to 0-1 range
+    return { r, g, b, a };
+  } else if (hex.length === 6) {
+    // Standard #RRGGBB format
+    r = parseInt(hex.slice(0, 2), 16);
+    g = parseInt(hex.slice(2, 4), 16);
+    b = parseInt(hex.slice(4, 6), 16);
+    return { r, g, b };
+  }
+  
+  return null;
+}
+
+// Helper function to parse RGB color to components
+function parseRgb(color: string): { r: number; g: number; b: number; a?: number } | null {
+  // Handle rgb format
+  const rgbMatch = color.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+  if (rgbMatch) {
+    return {
+      r: parseInt(rgbMatch[1], 10) / 255,
+      g: parseInt(rgbMatch[2], 10) / 255,
+      b: parseInt(rgbMatch[3], 10) / 255
+    };
+  }
+
+  // Handle rgba format
+  const rgbaMatch = color.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)/);
+  if (rgbaMatch) {
+    return {
+      r: parseInt(rgbaMatch[1], 10) / 255,
+      g: parseInt(rgbaMatch[2], 10) / 255,
+      b: parseInt(rgbaMatch[3], 10) / 255,
+      a: parseFloat(rgbaMatch[4])
+    };
+  }
+
+  return null;
+}
+
+// Helper function to match a color to the nearest Tailwind color
+function matchToTailwindColor(color: string): { name: string; shade: string; opacity?: number } | null {
+  // Try to parse the color to RGB
+  let rgb: { r: number; g: number; b: number; a?: number } | null = null;
+  
+  if (color.startsWith('#')) {
+    rgb = hexToRgb(color);
+  } else if (color.startsWith('rgb')) {
+    rgb = parseRgb(color);
+  }
+  
+  if (!rgb) return null;
+  
+  let closestColor = null;
+  let closestShade = null;
+  let minDistance = Infinity;
+  
+  // Special cases for black and white
+  if (colorDistance(rgb, hexToRgb(TAILWIND_COLORS.black)!) < 30) {
+    return { 
+      name: 'black', 
+      shade: '',
+      opacity: rgb.a !== undefined && rgb.a < 1 ? rgb.a : undefined
+    };
+  }
+  
+  if (colorDistance(rgb, hexToRgb(TAILWIND_COLORS.white)!) < 30) {
+    return { 
+      name: 'white', 
+      shade: '',
+      opacity: rgb.a !== undefined && rgb.a < 1 ? rgb.a : undefined
+    };
+  }
+  
+  // Check all color palettes
+  for (const [colorName, shades] of Object.entries(TAILWIND_COLORS)) {
+    if (colorName === 'black' || colorName === 'white') continue;
+    
+    for (const [shade, hexValue] of Object.entries(shades)) {
+      const tailwindRgb = hexToRgb(hexValue as string);
+      if (!tailwindRgb) continue;
+      
+      const distance = colorDistance(rgb, tailwindRgb);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestColor = colorName;
+        closestShade = shade;
+      }
+    }
+  }
+  
+  // Only return a match if it's reasonably close (threshold of 30 in RGB space is approximate)
+  if (minDistance < 30 && closestColor && closestShade) {
+    return { 
+      name: closestColor, 
+      shade: closestShade,
+      opacity: rgb.a !== undefined && rgb.a < 1 ? rgb.a : undefined
+    };
+  }
+  
+  return null;
+}
+
 // Helper function to parse padding/margin shorthand values
 function parseSpacingShorthand(value: string): { top: string; right: string; bottom: string; left: string } | null {
   if (!value) return null;
@@ -169,19 +453,54 @@ export function findMatchingColor(color: string, tokens: DesignTokens): string |
   return null;
 }
 
-
-const getRgba = (value: string) => {
-  try {
-    const rgba = figma.util.rgba(value);
-    if (rgba.a !== 1) {
-      return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
-  } else {
-    return `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`;
+/**
+ * Converts a color string to RGB/RGBA format
+ * This function tries multiple methods to extract RGB values from different color formats
+ */
+function getRgba(value: string): string | null {
+  // If already in RGB/RGBA format, return as is
+  if (value.startsWith('rgb')) {
+    return value;
   }
+  
+  // Try to parse as hex
+  if (value.startsWith('#')) {
+    const rgb = hexToRgb(value);
+    if (rgb) {
+      const r = Math.round(rgb.r * 255);
+      const g = Math.round(rgb.g * 255);
+      const b = Math.round(rgb.b * 255);
+      
+      if (rgb.a !== undefined && rgb.a < 1) {
+        return `rgba(${r}, ${g}, ${b}, ${rgb.a})`;
+      } else {
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+    }
+  }
+  
+  // Fallback to Figma utility if available
+  try {
+    if (typeof figma !== 'undefined' && figma.util && figma.util.rgba) {
+      const colorObj = figma.util.rgba(value);
+      if (typeof colorObj === 'object') {
+        const r = Math.round(colorObj.r * 255);
+        const g = Math.round(colorObj.g * 255);
+        const b = Math.round(colorObj.b * 255);
+        
+        if (colorObj.a !== undefined && colorObj.a < 1) {
+          return `rgba(${r}, ${g}, ${b}, ${colorObj.a})`;
+        } else {
+          return `rgb(${r}, ${g}, ${b})`;
+        }
+      }
+      return null;
+    }
   } catch (error) {
     console.error('Error extracting RGBA values:', error);
-    return null;
   }
+  
+  return null;
 }
 
 // Helper function to map pixel radius to Tailwind's border radius scale
@@ -225,6 +544,15 @@ export function findMatchingToken(
   // Normalize the value for comparison
   const normalizedValue = value.toLowerCase().trim();
   
+  // For colors, standardize to RGB/RGBA format
+  let standardizedValue = normalizedValue;
+  if (tokenType === 'colors' && !normalizedValue.startsWith('var(')) {
+    const rgbaValue = getRgba(normalizedValue);
+    if (rgbaValue) {
+      standardizedValue = rgbaValue.toLowerCase();
+    }
+  }
+  
   // Try to find a direct match in the design tokens
   for (const [tokenName, tokenData] of Object.entries(tokens[tokenType])) {
     const tokenNameNormalized = styleNameToVariable(tokenName);
@@ -232,7 +560,15 @@ export function findMatchingToken(
     // For colors, check if the value matches the token name or is close to the hex value
     if (tokenType === 'colors') {
       const tokenValue = (tokenData as ColorToken).value as string;
-      const tokenValueLower = tokenValue.toLowerCase();
+      
+      // Convert token value to RGB for comparison if needed
+      let standardizedTokenValue = tokenValue.toLowerCase();
+      if (!standardizedTokenValue.startsWith('var(')) {
+        const rgbaTokenValue = getRgba(standardizedTokenValue);
+        if (rgbaTokenValue) {
+          standardizedTokenValue = rgbaTokenValue.toLowerCase();
+        }
+      }
 
       // Check for exact name match
       if (normalizedValue === tokenNameNormalized) {
@@ -244,26 +580,19 @@ export function findMatchingToken(
         return tokenNameNormalized;
       }
       
-      // Check if the color value contains the token value (for hex codes)
-      if (tokenValueLower && getRgba(tokenValueLower) === getRgba(normalizedValue)) {
-        return tokenNameNormalized;
+      // If both values are in RGB/RGBA format, compare them
+      if (standardizedValue.startsWith('rgb') && standardizedTokenValue.startsWith('rgb')) {
+        const valueRgb = parseRgb(standardizedValue);
+        const tokenRgb = parseRgb(standardizedTokenValue);
+        
+        if (valueRgb && tokenRgb && colorDistance(valueRgb, tokenRgb) < 10) {
+          return tokenNameNormalized;
+        }
       }
       
-      // Handle RGB/RGBA format
-      if (normalizedValue.startsWith('rgb')) {
-        // Extract RGB values for comparison
-        const rgbMatch = normalizedValue.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-        if (rgbMatch) {
-          const [_, r, g, b] = rgbMatch;
-          // Create a simplified RGB string for comparison
-          const simplifiedRgb = `rgb(${r},${g},${b})`.toLowerCase();
-          
-          // Check if token value contains this RGB pattern
-          if (tokenValueLower.includes(simplifiedRgb) || 
-              tokenValueLower.includes(`${r}, ${g}, ${b}`)) {
-            return tokenNameNormalized;
-          }
-        }
+      // Check if the exact color value matches
+      if (standardizedValue === standardizedTokenValue) {
+        return tokenNameNormalized;
       }
     } else {
       // For other token types, just check the name
@@ -440,7 +769,6 @@ export function stylesToTailwind(styles: StyleProperties, tokens: DesignTokens):
     }
   }
   
-  // Fall back to raw values for properties that don't have style/variable references
   // Only add background color if it was explicitly specified and we haven't already handled it
   if (!addedProperties.has('backgroundColor') && shouldAddBackgroundColor && styles.backgroundColor) {
     // Check for transparent background
@@ -450,11 +778,43 @@ export function stylesToTailwind(styles: StyleProperties, tokens: DesignTokens):
     } else {
       // Try to find a matching color token
       const colorValue = extractColorValue(styles.backgroundColor);
-      const colorToken = colorValue ? findToken(styles.backgroundColor, 'colors') : null;
       
-      if (colorToken) {
-        tailwindClasses.push(`bg-${colorToken}`);
-        addedProperties.add('backgroundColor');
+      if (colorValue) {
+        // First try to find a token match - prioritize custom tokens
+        const colorToken = findToken(styles.backgroundColor, 'colors');
+        
+        if (colorToken) {
+          // Use the custom token
+          tailwindClasses.push(`bg-${colorToken}`);
+          addedProperties.add('backgroundColor');
+        } else {
+          // If no token match, standardize to RGB/RGBA and try Tailwind matching
+          const standardizedColor = getRgba(styles.backgroundColor) || styles.backgroundColor;
+          const tailwindMatch = matchToTailwindColor(standardizedColor);
+          
+          if (tailwindMatch) {
+            // Use Tailwind color
+            let colorClass = '';
+            if (tailwindMatch.shade) {
+              colorClass = `bg-${tailwindMatch.name}-${tailwindMatch.shade}`;
+            } else {
+              colorClass = `bg-${tailwindMatch.name}`;
+            }
+            
+            // Add opacity modifier if needed
+            if (tailwindMatch.opacity !== undefined) {
+              const opacityValue = Math.round(tailwindMatch.opacity * 100);
+              colorClass += `/${opacityValue}`;
+            }
+            
+            tailwindClasses.push(colorClass);
+            addedProperties.add('backgroundColor');
+          } else {
+            // Last resort: arbitrary value - use standardized color if available
+            tailwindClasses.push(`bg-[${standardizedColor}]`);
+            addedProperties.add('backgroundColor');
+          }
+        }
       } else {
         tailwindClasses.push(`bg-[${styles.backgroundColor}]`);
         addedProperties.add('backgroundColor');
@@ -548,20 +908,46 @@ export function stylesToTailwind(styles: StyleProperties, tokens: DesignTokens):
     if (styles.color && !addedProperties.has('color')) {
       // Try to find a matching color token for text color
       const colorValue = extractColorValue(styles.color);
-      const colorToken = colorValue ? findToken(styles.color, 'colors') : null;
       
-      if (colorToken) {
-        tailwindClasses.push(`text-${colorToken}`);
-        addedProperties.add('color');
-      } else {
+      if (colorValue) {
+        // First try to find a token match - prioritize custom tokens
         const colorToken = findToken(styles.color, 'colors');
+        
         if (colorToken) {
+          // Use the custom token
           tailwindClasses.push(`text-${colorToken}`);
           addedProperties.add('color');
         } else {
-          tailwindClasses.push(`text-[${styles.color}]`);
-          addedProperties.add('color');
+          // If no token match, standardize to RGB/RGBA and try Tailwind matching
+          const standardizedColor = getRgba(styles.color) || styles.color;
+          const tailwindMatch = matchToTailwindColor(standardizedColor);
+          
+          if (tailwindMatch) {
+            // Use Tailwind color
+            let colorClass = '';
+            if (tailwindMatch.shade) {
+              colorClass = `text-${tailwindMatch.name}-${tailwindMatch.shade}`;
+            } else {
+              colorClass = `text-${tailwindMatch.name}`;
+            }
+            
+            // Add opacity modifier if needed
+            if (tailwindMatch.opacity !== undefined) {
+              const opacityValue = Math.round(tailwindMatch.opacity * 100);
+              colorClass += `/${opacityValue}`;
+            }
+            
+            tailwindClasses.push(colorClass);
+            addedProperties.add('color');
+          } else {
+            // Last resort: arbitrary value - use standardized color if available
+            tailwindClasses.push(`text-[${standardizedColor}]`);
+            addedProperties.add('color');
+          }
         }
+      } else {
+        tailwindClasses.push(`text-[${styles.color}]`);
+        addedProperties.add('color');
       }
     }
     
@@ -641,6 +1027,80 @@ export function stylesToTailwind(styles: StyleProperties, tokens: DesignTokens):
     }
   }
   
+  // Handle border properties
+  if (styles.strokeWeight && !addedProperties.has('border')) {
+    // Extract the border width value
+    const borderMatch = styles.strokeWeight.match(/(\d+)px/);
+    if (borderMatch) {
+      const borderWidth = parseInt(borderMatch[1]);
+      // Add the appropriate Tailwind border class
+      if (borderWidth === 1) {
+        tailwindClasses.push('border');
+      } else if (borderWidth > 0) {
+        tailwindClasses.push(`border-${borderWidth}`);
+      }
+      
+      // If we have a border property with color information
+      if (styles.border) {
+        // Try to extract color information
+        const colorMatch = styles.border.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/);
+        if (colorMatch) {
+          const colorValue = colorMatch[0];
+          
+          // First try to find a token match - prioritize custom tokens
+          const colorToken = findToken(colorValue, 'colors');
+          
+          if (colorToken) {
+            // Use the custom token
+            tailwindClasses.push(`border-${colorToken}`);
+          } else {
+            // If no token match, standardize to RGB/RGBA and try Tailwind matching
+            const standardizedColor = getRgba(colorValue) || colorValue;
+            const tailwindMatch = matchToTailwindColor(standardizedColor);
+            
+            if (tailwindMatch) {
+              // Use Tailwind color
+              let colorClass = '';
+              if (tailwindMatch.shade) {
+                colorClass = `border-${tailwindMatch.name}-${tailwindMatch.shade}`;
+              } else {
+                colorClass = `border-${tailwindMatch.name}`;
+              }
+              
+              // Add opacity modifier if needed
+              if (tailwindMatch.opacity !== undefined) {
+                const opacityValue = Math.round(tailwindMatch.opacity * 100);
+                colorClass += `/${opacityValue}`;
+              }
+              
+              tailwindClasses.push(colorClass);
+            } else {
+              // Last resort: arbitrary value - use standardized color if available
+              tailwindClasses.push(`border-[${standardizedColor}]`);
+            }
+          }
+        }
+      }
+      
+      // Handle border style (solid, dashed, dotted)
+      if (styles.borderStyle) {
+        switch (styles.borderStyle) {
+          case 'solid':
+            // 'solid' is the default, so no class needed
+            break;
+          case 'dashed':
+            tailwindClasses.push('border-dashed');
+            break;
+          case 'dotted':
+            tailwindClasses.push('border-dotted');
+            break;
+        }
+      }
+      
+      addedProperties.add('border');
+    }
+  }
+  
   // Handle border radius
   if (styles.borderRadius && !addedProperties.has('borderRadius')) {
     // Try to find a matching border radius token
@@ -687,6 +1147,117 @@ export function stylesToTailwind(styles: StyleProperties, tokens: DesignTokens):
         addedProperties.add('borderRadius');
       }
     }
+  }
+  
+  // Handle position
+  if (styles.position && !addedProperties.has('position')) {
+    // Map position values directly to Tailwind classes
+    const positionMap: Record<string, string> = {
+      'absolute': 'absolute',
+      'relative': 'relative',
+      'fixed': 'fixed',
+      'sticky': 'sticky',
+      'static': 'static'
+    };
+    
+    if (positionMap[styles.position]) {
+      tailwindClasses.push(positionMap[styles.position]);
+      addedProperties.add('position');
+    }
+    
+    // Handle positioning values (top, right, bottom, left)
+    for (const prop of ['top', 'right', 'bottom', 'left'] as const) {
+      if (styles[prop]) {
+        const value = styles[prop]!;
+        if (value === '0' || value === '0px') {
+          tailwindClasses.push(`${prop}-0`);
+        } else {
+          // Try to match to spacing tokens or use arbitrary value
+          const spacingToken = findToken(value, 'spacing');
+          if (spacingToken) {
+            tailwindClasses.push(`${prop}-${spacingToken}`);
+          } else {
+            // Check if it's a pixel value
+            const pixelMatch = value.match(/(\d+)px/);
+            if (pixelMatch) {
+              const pixelValue = parseInt(pixelMatch[1]);
+              tailwindClasses.push(`${prop}-${pxToTailwindSpacing(pixelValue.toString())}`);
+            } else {
+              tailwindClasses.push(`${prop}-[${value}]`);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Handle margin
+  if (styles.margin && !addedProperties.has('margin')) {
+    // Try to find a matching spacing token
+    const spacingToken = findToken(styles.margin, 'spacing');
+    if (spacingToken) {
+      tailwindClasses.push(`m-${spacingToken}`);
+      addedProperties.add('margin');
+    } else {
+      // Check if it's a shorthand value
+      const parsedMargin = parseSpacingShorthand(styles.margin);
+      if (parsedMargin) {
+        // If all sides are equal, use a single margin class
+        if (parsedMargin.top === parsedMargin.right && 
+            parsedMargin.right === parsedMargin.bottom && 
+            parsedMargin.bottom === parsedMargin.left) {
+          tailwindClasses.push(`m-${pxToTailwindSpacing(parsedMargin.top)}`);
+        } else {
+          // Otherwise, use individual margin classes
+          tailwindClasses.push(`mt-${pxToTailwindSpacing(parsedMargin.top)}`);
+          tailwindClasses.push(`mr-${pxToTailwindSpacing(parsedMargin.right)}`);
+          tailwindClasses.push(`mb-${pxToTailwindSpacing(parsedMargin.bottom)}`);
+          tailwindClasses.push(`ml-${pxToTailwindSpacing(parsedMargin.left)}`);
+        }
+        addedProperties.add('margin');
+      }
+    }
+  }
+  
+  // Handle individual margin properties
+  for (const [prop, tailwindPrefix] of [
+    ['marginTop', 'mt'],
+    ['marginRight', 'mr'],
+    ['marginBottom', 'mb'],
+    ['marginLeft', 'ml']
+  ] as const) {
+    if (styles[prop] && !addedProperties.has(prop)) {
+      // Try to find a matching spacing token
+      const spacingToken = findToken(styles[prop], 'spacing');
+      if (spacingToken) {
+        tailwindClasses.push(`${tailwindPrefix}-${spacingToken}`);
+      } else {
+        // Check if it's a px value
+        const marginMatch = styles[prop].match(/(\d+)px/);
+        if (marginMatch) {
+          const marginValue = parseInt(marginMatch[1]);
+          tailwindClasses.push(`${tailwindPrefix}-${pxToTailwindSpacing(marginValue.toString())}`);
+        } else {
+          tailwindClasses.push(`${tailwindPrefix}-[${styles[prop]}]`);
+        }
+      }
+      addedProperties.add(prop);
+    }
+  }
+  
+  // Handle aspect ratio
+  if (styles.targetAspectRatio && !addedProperties.has('aspectRatio')) {
+    const ratio = styles.targetAspectRatio;
+    // Handle common aspect ratios
+    if (Math.abs(ratio - 1) < 0.01) {
+      tailwindClasses.push('aspect-square');
+    } else if (Math.abs(ratio - 16/9) < 0.01) {
+      tailwindClasses.push('aspect-video');
+    } else {
+      // Use custom aspect ratio
+      tailwindClasses.push(`aspect-[${ratio.toFixed(2)}]`);
+    }
+    addedProperties.add('aspectRatio');
   }
   
   // Handle individual corner radii

@@ -10,6 +10,17 @@ import { extractBaseStyles } from './styleProcessor';
 import { sanitizeIdentifier } from './nameUtils';
 
 /**
+ * Ensure name is in proper PascalCase format
+ */
+function ensurePascalCase(name: string): string {
+  // If the name doesn't start with an uppercase letter, capitalize it
+  if (!/^[A-Z]/.test(name)) {
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }
+  return name;
+}
+
+/**
  * Generate CVA definitions for a specific node
  */
 export function generateNodeCvaDefinitions(
@@ -60,7 +71,7 @@ export function generateNodeCvaDefinitions(
   }
   
   // Make the first letter uppercase for variant names
-  variantName = variantName.charAt(0).toUpperCase() + variantName.slice(1);
+  variantName = ensurePascalCase(variantName);
   
   // Append "Variants" to make it clear this is a CVA definition
   const cvaVariableName = `${variantName}Variants`;
@@ -153,11 +164,14 @@ export function generateAllCvaDefinitions(
 ): string {
   let cvaDefinitions = '';
   
+  // Ensure component name is in PascalCase
+  const pascalCaseName = ensurePascalCase(componentName);
+  
   // Process the base styles for the main component
   const filteredBaseStyles = extractBaseStyles(baseStyles);
   
   // Generate the main component CVA definition
-  const mainComponentCvaName = `${componentName}Variants`;
+  const mainComponentCvaName = `${pascalCaseName}Variants`;
   
   cvaDefinitions += `// Main component CVA\n`;
   cvaDefinitions += `const ${mainComponentCvaName} = cva(\n`;

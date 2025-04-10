@@ -7,13 +7,27 @@
 import { sanitizeIdentifier } from './nameUtils';
 
 /**
+ * Ensure component name is in proper PascalCase format
+ */
+function ensurePascalCase(componentName: string): string {
+  // If the name doesn't start with an uppercase letter, capitalize it
+  if (!/^[A-Z]/.test(componentName)) {
+    return componentName.charAt(0).toUpperCase() + componentName.slice(1);
+  }
+  return componentName;
+}
+
+/**
  * Generate TypeScript interface for component props
  */
 export function generatePropsInterface(
   componentName: string,
   variantProps: Record<string, string[]>
 ): string {
-  let interfaceStr = `interface ${componentName}Props {\n`;
+  // Ensure component name is in PascalCase
+  const pascalCaseName = ensurePascalCase(componentName);
+  
+  let interfaceStr = `interface ${pascalCaseName}Props {\n`;
   
   // Add each variant property as optional with its appropriate union type
   Object.entries(variantProps).forEach(([propKey, values]) => {
